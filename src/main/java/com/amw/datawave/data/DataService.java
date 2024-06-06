@@ -2,6 +2,7 @@ package com.amw.datawave.data;
 
 import com.amw.datawave.gusApi.BDLApiResponse;
 import com.amw.datawave.gusApi.BDLMeasureUnitResponse;
+import com.amw.datawave.measure.MeasureInfo;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,8 +35,6 @@ public class DataService implements CommandLineRunner {
     private List<String> formats;
 
 
-
-
     public List<DataModel> showAllData() {
         return dataRepository.findAll();
     }
@@ -52,6 +51,7 @@ public class DataService implements CommandLineRunner {
         List<DataModel> dataModels = fetchData();
         dataRepository.saveAll(dataModels);
     }
+
     private List<DataModel> fetchData() {
         String jsonFormat = formats.get(0);
         List<DataModel> dataModels = new ArrayList<>();
@@ -63,8 +63,8 @@ public class DataService implements CommandLineRunner {
                 .boxed()
                 .collect(Collectors.toMap(ids::get, names::get));
 
-        // fetch measure units
-        Map<Integer, String> measureUnitMap = fetchMeasureUnits();
+        // fetch measure info
+        Map<Integer, MeasureInfo> measureMap = fetchMeasureInfo();
         for (String id : ids) {
             String url = String.format("https://bdl.stat.gov.pl/api/v1/data/by-variable/%s?format=%s&lang=pl&unit-level=0", id, jsonFormat);
             String response = restTemplate.getForObject(url, String.class);
@@ -80,7 +80,8 @@ public class DataService implements CommandLineRunner {
                         dataModel.setValue(value.getValue());
                         dataModel.setMeasureUnitId(measureUnitId);
                         dataModel.setName(idNameMap.get(id));
-                        dataModel.setMeasureUnitName(measureUnitMap.get(measureUnitId));
+                        dataModel.setMeasureUnitName(measureMap.get(measureUnitId).getName());
+                        dataModel.setMeasureUnitDescription(measureMap.get(measureUnitId).getDescription());
                         dataModels.add(dataModel);
                     }
                 }
@@ -91,23 +92,25 @@ public class DataService implements CommandLineRunner {
 
         return dataModels;
     }
-    private Map<Integer, String> fetchMeasureUnits() {
+
+    private Map<Integer, MeasureInfo> fetchMeasureInfo() {
         String url = "https://bdl.stat.gov.pl/api/v1/measures?format=json&lang=pl";
         String response = restTemplate.getForObject(url, String.class);
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        Map<Integer, String> measureUnitMap = new HashMap<>();
+        Map<Integer, MeasureInfo> measureInfoMap = new HashMap<>();
 
         try {
             BDLMeasureUnitResponse measureUnitResponse = mapper.readValue(response, BDLMeasureUnitResponse.class);
             for (BDLMeasureUnitResponse.MeasureUnit measureUnit : measureUnitResponse.getResults()) {
-                measureUnitMap.put(measureUnit.getId(), measureUnit.getName());
+                MeasureInfo measureInfo = new MeasureInfo(measureUnit.getName(), measureUnit.getDescription());
+                measureInfoMap.put(measureUnit.getId(), measureInfo);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return measureUnitMap;
+        return measureInfoMap;
     }
 
 

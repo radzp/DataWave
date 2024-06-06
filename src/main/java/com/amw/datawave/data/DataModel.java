@@ -23,7 +23,7 @@ public class DataModel {
     private int measureUnitId;
     @Column(name = "measure_unit_name")
     private String measureUnitName;
-//    @Column(name = "measure_unit_description")
-//    private String measureUnitDescription;
+    @Column(name = "measure_unit_description")
+    private String measureUnitDescription;
 
 }
