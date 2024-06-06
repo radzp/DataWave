@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Entity(name = "data_model")
+@Table(name = "data_model")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
