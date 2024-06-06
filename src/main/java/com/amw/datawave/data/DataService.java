@@ -14,4 +14,11 @@ public class DataService {
         return dataRepository.findAll();
     }
 
+    public List<DataModel> showByName(String name) {
+        return dataRepository.findByName(name);
+    }
+
+    public DataModel showById(Long id) {
+        return dataRepository.findById(id).orElseThrow(() -> new RuntimeException("Data not found"));
+    }
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,8 +24,11 @@ import java.util.stream.IntStream;
 @AllArgsConstructor
 public class ExternalDataFetchService implements CommandLineRunner {
     private final DataRepository dataRepository;
+
+    // RestTemplate-klasa z Springa, która pozwala na wykonywanie zapytań HTTP
     private final RestTemplate restTemplate;
 
+    // Wartości pobierane z pliku application.properties
     @Value("#{'${api.ids}'.split(',')}")
     private List<String> ids;
 
@@ -41,16 +45,24 @@ public class ExternalDataFetchService implements CommandLineRunner {
         fetchDataAndSave();
     }
 
+
     // Metody zapisywania danych z zewnetrznych api do bazy danych
     public void fetchDataAndSave() {
         List<DataModel> dataModels = fetchData();
         dataRepository.saveAll(dataModels);
     }
 
+    // Metoda pobierająca dane z zewnętrznego api
     private List<DataModel> fetchData() {
+        final int YEARS_TO_FETCH = 10;
+        int startYear = Year.now().getValue() - YEARS_TO_FETCH;
+
         String jsonFormat = formats.get(0);
         List<DataModel> dataModels = new ArrayList<>();
+
+        // ObjectMapper z Jacksona, który pozwala na mapowanie JSONa na obiekty
         ObjectMapper mapper = new ObjectMapper();
+        // Ignorowanie nieznanych pól
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         // map id z nazwą
@@ -77,10 +89,13 @@ public class ExternalDataFetchService implements CommandLineRunner {
                 List<DataValue> dataValues = new ArrayList<>();
                 for (BDLApiResponse.Result result : apiResponse.getResults()) {
                     for (BDLApiResponse.Value value : result.getValues()) {
-                        DataValue dataValue = new DataValue();
-                        dataValue.setYear(Integer.parseInt(value.getYear()));
-                        dataValue.setValue(value.getValue());
-                        dataValues.add(dataValue);
+                        int year = Integer.parseInt(value.getYear());
+                        if (year >= startYear) {
+                            DataValue dataValue = new DataValue();
+                            dataValue.setYear(Integer.parseInt(value.getYear()));
+                            dataValue.setValue(value.getValue());
+                            dataValues.add(dataValue);
+                        }
                     }
                 }
                 dataModel.setData(dataValues);
@@ -93,10 +108,13 @@ public class ExternalDataFetchService implements CommandLineRunner {
         return dataModels;
     }
 
+    // Metoda pobierająca informacje o jednostkach miary
     private Map<Integer, MeasureInfo> fetchMeasureInfo() {
         String url = "https://bdl.stat.gov.pl/api/v1/measures?format=json&lang=pl";
         String response = restTemplate.getForObject(url, String.class);
+        // ObjectMapper z Jacksona, który pozwala na mapowanie JSONa na obiekty
         ObjectMapper mapper = new ObjectMapper();
+        // Ignorowanie nieznanych pól
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         Map<Integer, MeasureInfo> measureInfoMap = new HashMap<>();
 
