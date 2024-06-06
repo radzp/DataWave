@@ -21,5 +21,9 @@ public class DataModel {
     private Double value;
     @Column(name = "measure_unit_id")
     private int measureUnitId;
+    @Column(name = "measure_unit_name")
+    private String measureUnitName;
+//    @Column(name = "measure_unit_description")
+//    private String measureUnitDescription;
 
 }
