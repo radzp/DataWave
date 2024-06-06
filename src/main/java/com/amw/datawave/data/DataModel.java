@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity(name = "data")
+import java.util.List;
+
+@Entity(name = "data_model")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,15 +17,13 @@ public class DataModel {
     private Long id;
     @Column(name = "name")
     private String name;
-    @Column(name = "year")
-    private Integer year;
-    @Column(name = "value")
-    private Double value;
     @Column(name = "measure_unit_id")
     private int measureUnitId;
     @Column(name = "measure_unit_name")
     private String measureUnitName;
     @Column(name = "measure_unit_description")
     private String measureUnitDescription;
-
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "data_id")
+    private List<DataValue> data;
 }

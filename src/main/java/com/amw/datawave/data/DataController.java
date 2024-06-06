@@ -16,6 +16,7 @@ public class DataController {
 
     @GetMapping("/showAllData")
     public ResponseEntity<List<DataModel>> showAllData() {
-        return ResponseEntity.ok(dataService.showAllData());
+        List<DataModel> dataModels = dataService.showAllData();
+        return ResponseEntity.ok(dataModels);
     }
 }
