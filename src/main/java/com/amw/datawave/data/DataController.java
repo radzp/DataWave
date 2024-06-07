@@ -1,11 +1,9 @@
 package com.amw.datawave.data;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -15,19 +13,19 @@ import java.util.List;
 public class DataController {
     private final DataService dataService;
 
-    @GetMapping("/all")
+    @GetMapping(value = "/all", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public ResponseEntity<List<DataModel>> showAllData() {
         List<DataModel> dataModels = dataService.showAllData();
         return ResponseEntity.ok(dataModels);
     }
 
-    @GetMapping("/name/{name}")
+    @GetMapping(value = "/name/{name}", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public ResponseEntity<List<DataModel>> getByName(@PathVariable String name) {
         List<DataModel> dataModels = dataService.showByName(name);
         return ResponseEntity.ok(dataModels);
     }
 
-    @GetMapping("/id/{id}")
+    @GetMapping(value = "/id/{id}", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public ResponseEntity<DataModel> getById(@PathVariable Long id) {
         DataModel dataModel = dataService.showById(id);
         return ResponseEntity.ok(dataModel);
