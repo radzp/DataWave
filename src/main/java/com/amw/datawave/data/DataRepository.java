@@ -7,6 +7,6 @@ import java.util.List;
 
 @Repository
 public interface DataRepository extends JpaRepository<DataModel, Long>{
-
     List<DataModel> findByName(String name);
+
 }

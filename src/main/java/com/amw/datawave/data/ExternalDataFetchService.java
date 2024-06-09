@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -47,20 +49,21 @@ public class ExternalDataFetchService implements CommandLineRunner {
 
 
     // Metody zapisywania danych z zewnetrznych api do bazy danych
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void fetchDataAndSave() {
         List<DataModel> dataModels = fetchData();
         dataRepository.saveAll(dataModels);
     }
 
     // Metoda pobierająca dane z zewnętrznego api
-    private List<DataModel> fetchData() {
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    protected List<DataModel> fetchData() {
         final int YEARS_TO_FETCH = 10;
         int startYear = Year.now().getValue() - YEARS_TO_FETCH;
 
-        String jsonFormat = formats.get(0);
         List<DataModel> dataModels = new ArrayList<>();
 
-        // ObjectMapper z Jacksona, który pozwala na mapowanie JSONa na obiekty
+        // ObjectMapper z Jacksona, który pozwala na mapowanie na obiekty
         ObjectMapper mapper = new ObjectMapper();
         // Ignorowanie nieznanych pól
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -70,10 +73,10 @@ public class ExternalDataFetchService implements CommandLineRunner {
                 .boxed()
                 .collect(Collectors.toMap(ids::get, names::get));
 
-        // fetch measure info
         Map<Integer, MeasureInfo> measureMap = fetchMeasureInfo();
+
         for (String id : ids) {
-            String url = String.format("https://bdl.stat.gov.pl/api/v1/data/by-variable/%s?format=%s&lang=pl&unit-level=0", id, jsonFormat);
+            String url = String.format("https://bdl.stat.gov.pl/api/v1/data/by-variable/%s?format=%s&lang=pl&unit-level=0", id, formats.get(0));
             String response = restTemplate.getForObject(url, String.class);
 
             try {
