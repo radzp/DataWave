@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface DataRepository extends JpaRepository<DataModel, Long>{
+// W DataRepository.java
+public interface DataRepository extends JpaRepository<DataModel, Long> {
     List<DataModel> findByName(String name);
-
 }

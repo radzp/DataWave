@@ -18,6 +18,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,12 +29,34 @@ public class DataService {
         return dataRepository.findAll();
     }
 
-    public List<DataModel> showByName(String name) {
-        return dataRepository.findByName(name);
+
+    public List<DataModel> showByName(String name, List<Integer> years) {
+        List<DataModel> dataModels = dataRepository.findByName(name);
+
+        if (years != null && !years.isEmpty()) {
+            for (DataModel dataModel : dataModels) {
+                List<DataValue> filteredData = dataModel.getData().stream()
+                        .filter(dataValue -> years.contains(dataValue.getYear()))
+                        .collect(Collectors.toList());
+                dataModel.setData(filteredData);
+            }
+        }
+
+        return dataModels;
     }
 
-    public DataModel showById(Long id) {
-        return dataRepository.findById(id).orElseThrow(() -> new RuntimeException("Data not found"));
+
+    public DataModel showById(Long id, List<Integer> years) {
+        DataModel dataModel = dataRepository.findById(id).orElseThrow(() -> new RuntimeException("Data not found"));
+
+        if (years != null && !years.isEmpty()) {
+            List<DataValue> filteredData = dataModel.getData().stream()
+                    .filter(dataValue -> years.contains(dataValue.getYear()))
+                    .collect(Collectors.toList());
+            dataModel.setData(filteredData);
+        }
+
+        return dataModel;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)

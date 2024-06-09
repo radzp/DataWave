@@ -24,14 +24,14 @@ public class DataController {
     }
 
     @GetMapping(value = "/name/{name}", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
-    public ResponseEntity<List<DataModel>> getByName(@PathVariable String name) {
-        List<DataModel> dataModels = dataService.showByName(name);
+    public ResponseEntity<List<DataModel>> getByName(@PathVariable String name, @RequestParam(required = false) List<Integer> year) {
+        List<DataModel> dataModels = dataService.showByName(name, year);
         return ResponseEntity.ok(dataModels);
     }
 
     @GetMapping(value = "/id/{id}", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
-    public ResponseEntity<DataModel> getById(@PathVariable Long id) {
-        DataModel dataModel = dataService.showById(id);
+    public ResponseEntity<DataModel> getById(@PathVariable Long id, @RequestParam(required = false) List<Integer> year) {
+        DataModel dataModel = dataService.showById(id,year);
         return ResponseEntity.ok(dataModel);
     }
 
@@ -44,7 +44,6 @@ public class DataController {
     public ResponseEntity<byte[]> exportDataToXml() throws Exception {
         return dataService.exportDataToXml();
     }
-
 
     @PostMapping(value = "/import/json", consumes = "multipart/form-data")
     public ResponseEntity<Void> importDataFromJson(@RequestParam("file") MultipartFile file) throws Exception {

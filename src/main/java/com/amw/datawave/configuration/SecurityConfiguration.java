@@ -2,7 +2,6 @@ package com.amw.datawave.configuration;
 
 
 import com.amw.datawave.jwt.JwtAuthenticationFilter;
-import com.amw.datawave.user.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,10 +25,11 @@ public class SecurityConfiguration {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/data/**").hasAnyAuthority(Role.USER.name())
-                        .requestMatchers("/api/v1/db/**").hasAnyAuthority(Role.ADMIN.name())
-                        .anyRequest().authenticated()
+//                        .requestMatchers("/api/v1/auth/**").permitAll()
+//                        .requestMatchers("/api/v1/data/**").hasAnyAuthority(Role.USER.name())
+//                        .requestMatchers("/api/v1/db/**").hasAnyAuthority(Role.ADMIN.name())
+//                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
