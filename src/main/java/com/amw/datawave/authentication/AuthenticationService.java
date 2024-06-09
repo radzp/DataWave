@@ -1,5 +1,6 @@
 package com.amw.datawave.authentication;
 
+import com.amw.datawave.exception.EmailAlreadyExistsException;
 import com.amw.datawave.jwt.JwtService;
 import com.amw.datawave.user.Role;
 import com.amw.datawave.user.User;
@@ -8,6 +9,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,16 +26,21 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
 
+
     public AuthenticationResponse register(RegisterRequest registerRequest) {
-        User user = User.builder()
-                .name(registerRequest.getUsername())
-                .email(registerRequest.getEmail())
-                .password(passwordEncoder.encode(registerRequest.getPassword()))
-                .role(Role.USER)
-                .build();
-        userRepository.save(user);
-        String token = jwtService.generateToken(user);
-        return new AuthenticationResponse(token);
+        try {
+            User user = User.builder()
+                    .name(registerRequest.getUsername())
+                    .email(registerRequest.getEmail())
+                    .password(passwordEncoder.encode(registerRequest.getPassword()))
+                    .role(Role.USER)
+                    .build();
+            userRepository.save(user);
+            String token = jwtService.generateToken(user);
+            return new AuthenticationResponse(token);
+        } catch (DataIntegrityViolationException e) {
+            throw new EmailAlreadyExistsException("User with this email already exists");
+        }
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request, HttpServletResponse response) {
@@ -43,7 +50,7 @@ public class AuthenticationService {
 
         Date jwtIssuedAt = jwtService.extractClaim(token, Claims::getIssuedAt);
         Date jwtExpiration = jwtService.extractClaim(token, Claims::getExpiration);
-        long jwtDuration = (jwtExpiration.getTime() - jwtIssuedAt.getTime())/1000;
+        long jwtDuration = (jwtExpiration.getTime() - jwtIssuedAt.getTime()) / 1000;
 
         Cookie jwtCookie = new Cookie("jwtToken", token);
         jwtCookie.setHttpOnly(true); // zabezpieczenie przed atakami XSS
