@@ -94,12 +94,14 @@ public class DataService {
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void importDataFromXml(String xmlData) throws Exception {
-        JAXBContext jaxbContext = JAXBContext.newInstance(DataModel.class);
+        JAXBContext jaxbContext = JAXBContext.newInstance(DataModelList.class);
         Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 
         StringReader reader = new StringReader(xmlData);
-        DataModel dataModel = (DataModel) jaxbUnmarshaller.unmarshal(reader);
+        DataModelList dataModelList = (DataModelList) jaxbUnmarshaller.unmarshal(reader);
 
-        saveData(dataModel);
+        for (DataModel dataModel : dataModelList.getItems()) {
+            saveData(dataModel);
+        }
     }
 }

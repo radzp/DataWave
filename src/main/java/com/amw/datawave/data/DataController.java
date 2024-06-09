@@ -5,7 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 
@@ -43,14 +45,17 @@ public class DataController {
         return dataService.exportDataToXml();
     }
 
-    @PostMapping(value = "/import/json", consumes = "application/json")
-    public ResponseEntity<Void> importDataFromJson(@RequestBody String jsonData) throws Exception {
+
+    @PostMapping(value = "/import/json", consumes = "multipart/form-data")
+    public ResponseEntity<Void> importDataFromJson(@RequestParam("file") MultipartFile file) throws Exception {
+        String jsonData = new String(file.getBytes(), StandardCharsets.UTF_8);
         dataService.importDataFromJson(jsonData);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PostMapping(value = "/import/xml", consumes = "application/xml")
-    public ResponseEntity<Void> importDataFromXml(@RequestBody String xmlData) throws Exception {
+    @PostMapping(value = "/import/xml", consumes = "multipart/form-data")
+    public ResponseEntity<Void> importDataFromXml(@RequestParam("file") MultipartFile file) throws Exception {
+        String xmlData = new String(file.getBytes(), StandardCharsets.UTF_8);
         dataService.importDataFromXml(xmlData);
         return new ResponseEntity<>(HttpStatus.OK);
     }
