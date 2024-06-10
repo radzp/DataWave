@@ -75,8 +75,7 @@ public class UserService implements UserDetailsService {
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void importUsersFromJson(String jsonData) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
-        List<User> users = objectMapper.readValue(jsonData, new TypeReference<List<User>>() {
-        });
+        List<User> users = objectMapper.readValue(jsonData, new TypeReference<>() {});
 
         userRepository.saveAll(users);
     }

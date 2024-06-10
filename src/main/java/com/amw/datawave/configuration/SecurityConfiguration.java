@@ -34,6 +34,10 @@ public class SecurityConfiguration {
                 .sessionManagement(sessionManagement -> sessionManagement
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .logout((logout) -> logout
+                        .logoutSuccessUrl("/")
+                        .deleteCookies("jwtToken")
+                        .permitAll())
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
