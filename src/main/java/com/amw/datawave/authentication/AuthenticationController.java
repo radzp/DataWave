@@ -1,5 +1,6 @@
 package com.amw.datawave.authentication;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,4 +25,10 @@ public class AuthenticationController {
         return ResponseEntity.ok(authResponse);
     }
 
+    // check if user is authenticated
+    @GetMapping("/check")
+    public ResponseEntity<Boolean> check(HttpServletRequest request) {
+        boolean isAuthenticated = authenticationService.checkAuthentication(request);
+        return ResponseEntity.ok(isAuthenticated);
+    }
 }

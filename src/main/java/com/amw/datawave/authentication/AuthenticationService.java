@@ -5,16 +5,20 @@ import com.amw.datawave.jwt.JwtService;
 import com.amw.datawave.user.Role;
 import com.amw.datawave.user.User;
 import com.amw.datawave.user.UserRepository;
+import com.amw.datawave.user.UserService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Date;
 
 @Service
@@ -25,6 +29,7 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final UserService userService;
 
 
     public AuthenticationResponse register(RegisterRequest registerRequest) {
@@ -54,7 +59,6 @@ public class AuthenticationService {
 
         Cookie jwtCookie = new Cookie("jwtToken", token);
         jwtCookie.setHttpOnly(true); // zabezpieczenie przed atakami XSS
-        jwtCookie.setSecure(true); // zabezpieczenie przed atakami CSRF
         jwtCookie.setMaxAge((int) jwtDuration); // czas życia ciasteczka
         jwtCookie.setPath("/"); // "/", oznacza, że ciasteczko będzie dostępne dla całej strony
 
@@ -62,6 +66,26 @@ public class AuthenticationService {
         response.addCookie(jwtCookie);
 
         return new AuthenticationResponse(token);
+    }
+
+
+    public boolean checkAuthentication(HttpServletRequest request) {
+        Cookie jwtCookie = Arrays.stream(request.getCookies())
+                .filter(cookie -> "jwtToken".equals(cookie.getName()))
+                .findFirst()
+                .orElse(null);
+
+        if(jwtCookie != null){
+            String jwtToken = jwtCookie.getValue();
+            String userEmail = jwtService.extractUsername(jwtToken);
+
+            if (userEmail != null){
+                UserDetails userDetails = userService.loadUserByUsername(userEmail);
+                return jwtService.isTokenValid(jwtToken, userDetails);
+            }
+        }
+
+        return false;
     }
 
 }

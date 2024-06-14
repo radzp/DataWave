@@ -2,6 +2,8 @@ package com.amw.datawave.configuration;
 
 
 import com.amw.datawave.jwt.JwtAuthenticationFilter;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,17 +31,22 @@ public class SecurityConfiguration {
 //                        .requestMatchers("/api/v1/data/**").hasAnyAuthority(Role.USER.name())
 //                        .requestMatchers("/api/v1/db/**").hasAnyAuthority(Role.ADMIN.name())
 //                        .anyRequest().authenticated()
+                                .requestMatchers("/logout").permitAll()
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .logout((logout) -> logout
-                        .logoutSuccessUrl("/")
+                        .logoutUrl("/logout")
                         .deleteCookies("jwtToken")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setStatus(HttpServletResponse.SC_OK);
+                        })
                         .permitAll())
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .authenticationProvider(authenticationProvider);
+
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
