@@ -1,11 +1,15 @@
 package com.amw.datawave.authentication;
 
+import com.amw.datawave.user.User;
+import com.amw.datawave.user.UserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,8 +31,14 @@ public class AuthenticationController {
 
     // check if user is authenticated
     @GetMapping("/check")
-    public ResponseEntity<Boolean> check(HttpServletRequest request) {
+    public ResponseEntity<?> check(HttpServletRequest request) {
         boolean isAuthenticated = authenticationService.checkAuthentication(request);
-        return ResponseEntity.ok(isAuthenticated);
+        if (isAuthenticated) {
+            User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            UserDTO userDTO = new UserDTO(user.getId(), user.getName(), user.getEmail(), user.getRole());
+            return ResponseEntity.ok(userDTO);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User is not authenticated");
+        }
     }
 }

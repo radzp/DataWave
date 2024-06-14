@@ -3,6 +3,7 @@ package com.amw.datawave.data;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,8 +18,10 @@ import javax.xml.bind.Unmarshaller;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -30,34 +33,36 @@ public class DataService {
     }
 
 
-    public List<DataModel> showByName(String name, List<Integer> years) {
-        List<DataModel> dataModels = dataRepository.findByName(name);
+public List<DataModel> showByName(List<String> names, List<Integer> years) {
+    List<DataModel> dataModels = dataRepository.findByNameIn(names);
 
-        if (years != null && !years.isEmpty()) {
-            for (DataModel dataModel : dataModels) {
-                List<DataValue> filteredData = dataModel.getData().stream()
-                        .filter(dataValue -> years.contains(dataValue.getYear()))
-                        .collect(Collectors.toList());
-                dataModel.setData(filteredData);
-            }
-        }
-
-        return dataModels;
-    }
-
-
-    public DataModel showById(Long id, List<Integer> years) {
-        DataModel dataModel = dataRepository.findById(id).orElseThrow(() -> new RuntimeException("Data not found"));
-
-        if (years != null && !years.isEmpty()) {
+    if (years != null && !years.isEmpty()) {
+        for (DataModel dataModel : dataModels) {
             List<DataValue> filteredData = dataModel.getData().stream()
                     .filter(dataValue -> years.contains(dataValue.getYear()))
                     .collect(Collectors.toList());
             dataModel.setData(filteredData);
         }
-
-        return dataModel;
     }
+
+    return dataModels;
+}
+
+
+public List<DataModel> showById(List<Long> ids, List<Integer> years) {
+    List<DataModel> dataModels = dataRepository.findAllById(ids);
+
+    if (years != null && !years.isEmpty()) {
+        for (DataModel dataModel : dataModels) {
+            List<DataValue> filteredData = dataModel.getData().stream()
+                    .filter(dataValue -> years.contains(dataValue.getYear()))
+                    .collect(Collectors.toList());
+            dataModel.setData(filteredData);
+        }
+    }
+
+    return dataModels;
+}
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void saveData(DataModel dataModel) {
@@ -126,5 +131,12 @@ public class DataService {
         for (DataModel dataModel : dataModelList.getItems()) {
             saveData(dataModel);
         }
+    }
+
+
+    public List<BenefitName> getBenefitNames() {
+        return dataRepository.findAll().stream()
+                .map(dataModel -> new BenefitName(dataModel.getId(), dataModel.getName()))
+                .collect(Collectors.toList());
     }
 }
