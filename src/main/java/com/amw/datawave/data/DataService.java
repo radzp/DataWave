@@ -134,9 +134,23 @@ public List<DataModel> showById(List<Long> ids, List<Integer> years) {
     }
 
 
-    public List<BenefitName> getBenefitNames() {
-        return dataRepository.findAll().stream()
+    public List<BenefitName> getBenefitNames(String measureUnit) {
+        List<DataModel> dataModels;
+        if (measureUnit != null) {
+            dataModels = dataRepository.findByMeasureUnitName(measureUnit);
+        } else {
+            dataModels = dataRepository.findAll();
+        }
+
+        return dataModels.stream()
                 .map(dataModel -> new BenefitName(dataModel.getId(), dataModel.getName()))
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getMeasureUnitNames() {
+        return dataRepository.findAll().stream()
+                .map(DataModel::getMeasureUnitName)
+                .distinct()
                 .collect(Collectors.toList());
     }
 }

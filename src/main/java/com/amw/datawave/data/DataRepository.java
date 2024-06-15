@@ -9,5 +9,8 @@ import java.util.List;
 // W DataRepository.java
 public interface DataRepository extends JpaRepository<DataModel, Long> {
     List<DataModel> findByName(String name);
+
     List<DataModel> findByNameIn(List<String> names);
+
+    List<DataModel> findByMeasureUnitName(String measureUnit);
 }

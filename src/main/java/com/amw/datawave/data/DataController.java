@@ -30,15 +30,24 @@ public class DataController {
     }
 
     @GetMapping("/benefitNames")
-    public ResponseEntity<List<BenefitName>> getBenefitNames() {
+    public ResponseEntity<List<BenefitName>> getBenefitNames(@RequestParam(required = false) String measureUnit) {
         try {
-            List<BenefitName> benefits = dataService.getBenefitNames();
+            List<BenefitName> benefits = dataService.getBenefitNames(measureUnit);
             return ResponseEntity.ok(benefits);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
+    @GetMapping("/measureUnitNames")
+    public ResponseEntity<List<String>> getMeasureUnitNames() {
+        try {
+            List<String> measureUnitNames = dataService.getMeasureUnitNames();
+            return ResponseEntity.ok(measureUnitNames);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
 
     @GetMapping(value = "/name", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public ResponseEntity<List<DataModel>> getByName(@RequestParam List<String> name, @RequestParam(required = false) List<Integer> year) {
