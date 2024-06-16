@@ -71,6 +71,16 @@ public class DataController {
         return dataService.exportDataToXml();
     }
 
+    @GetMapping(value = "/export/jsonByIds", produces = "application/json")
+    public ResponseEntity<byte[]> exportDataToJsonWithIds(@RequestParam List<Long> id) throws Exception {
+        return dataService.exportDataToJsonWithIds(id);
+    }
+
+    @GetMapping(value = "/export/xmlByIds", produces = "application/xml")
+    public ResponseEntity<byte[]> exportDataToXmlWithIds(@RequestParam List<Long> id) throws Exception {
+        return dataService.exportDataToXmlWithIds(id);
+    }
+
     @PostMapping(value = "/import/json", consumes = "multipart/form-data")
     public ResponseEntity<Void> importDataFromJson(@RequestParam("file") MultipartFile file) throws Exception {
         String jsonData = new String(file.getBytes(), StandardCharsets.UTF_8);

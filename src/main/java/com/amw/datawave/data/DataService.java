@@ -1,5 +1,6 @@
 package com.amw.datawave.data;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import java.io.StringReader;
@@ -32,37 +34,20 @@ public class DataService {
         return dataRepository.findAll();
     }
 
-
-public List<DataModel> showByName(List<String> names, List<Integer> years) {
-    List<DataModel> dataModels = dataRepository.findByNameIn(names);
-
-    if (years != null && !years.isEmpty()) {
-        for (DataModel dataModel : dataModels) {
-            List<DataValue> filteredData = dataModel.getData().stream()
-                    .filter(dataValue -> years.contains(dataValue.getYear()))
-                    .collect(Collectors.toList());
-            dataModel.setData(filteredData);
-        }
+    public List<DataModel> getDataByIds(List<Long> ids) {
+        return dataRepository.findAllById(ids);
     }
 
-    return dataModels;
-}
-
-
-public List<DataModel> showById(List<Long> ids, List<Integer> years) {
-    List<DataModel> dataModels = dataRepository.findAllById(ids);
-
-    if (years != null && !years.isEmpty()) {
-        for (DataModel dataModel : dataModels) {
-            List<DataValue> filteredData = dataModel.getData().stream()
-                    .filter(dataValue -> years.contains(dataValue.getYear()))
-                    .collect(Collectors.toList());
-            dataModel.setData(filteredData);
-        }
+    public List<DataModel> showByName(List<String> names, List<Integer> years) {
+        List<DataModel> dataModels = dataRepository.findByNameIn(names);
+        return filterAndSetData(years, dataModels);
     }
 
-    return dataModels;
-}
+    public List<DataModel> showById(List<Long> ids, List<Integer> years) {
+        List<DataModel> dataModels = dataRepository.findAllById(ids);
+
+        return filterAndSetData(years, dataModels);
+    }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void saveData(DataModel dataModel) {
@@ -71,42 +56,21 @@ public List<DataModel> showById(List<Long> ids, List<Integer> years) {
 
     public ResponseEntity<byte[]> exportDataToJson() throws Exception {
         List<DataModel> dataModels = showAllData();
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        String jsonData = objectMapper.writeValueAsString(dataModels);
-
-        byte[] isr = jsonData.getBytes();
-        HttpHeaders respHeaders = new HttpHeaders();
-        respHeaders.setContentLength(isr.length);
-        respHeaders.setContentType(new MediaType("text", "json"));
-        respHeaders.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-        respHeaders.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=data.json");
-
-        return new ResponseEntity<>(isr, respHeaders, HttpStatus.OK);
+        return mapToJsonAndExport(dataModels);
     }
 
     public ResponseEntity<byte[]> exportDataToXml() throws Exception {
         List<DataModel> dataModels = showAllData();
+        return mapToXmlAndExport(dataModels);
+    }
+    public ResponseEntity<byte[]> exportDataToJsonWithIds(List<Long> ids) throws Exception {
+        List<DataModel> dataModels = getDataByIds(ids);
+        return mapToJsonAndExport(dataModels);
+    }
 
-        DataModelList dataModelList = new DataModelList();
-        dataModelList.setItems(dataModels);
-
-        JAXBContext jaxbContext = JAXBContext.newInstance(DataModelList.class);
-        Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-
-        StringWriter sw = new StringWriter();
-        jaxbMarshaller.marshal(dataModelList, sw);
-        String xmlContent = sw.toString();
-
-        byte[] xmlBytes = xmlContent.getBytes(StandardCharsets.UTF_8);
-
-        HttpHeaders respHeaders = new HttpHeaders();
-        respHeaders.setContentType(new MediaType("application", "xml"));
-        respHeaders.setContentLength(xmlBytes.length);
-        respHeaders.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-        respHeaders.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=data.xml");
-
-        return new ResponseEntity<>(xmlBytes, respHeaders, HttpStatus.OK);
+    public ResponseEntity<byte[]> exportDataToXmlWithIds(List<Long> ids) throws Exception {
+        List<DataModel> dataModels = getDataByIds(ids);
+        return mapToXmlAndExport(dataModels);
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -152,5 +116,55 @@ public List<DataModel> showById(List<Long> ids, List<Integer> years) {
                 .map(DataModel::getMeasureUnitName)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+
+
+    // Funkcje pomocnicze
+    private ResponseEntity<byte[]> mapToJsonAndExport(List<DataModel> dataModels) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonData = objectMapper.writeValueAsString(dataModels);
+
+        byte[] isr = jsonData.getBytes();
+        HttpHeaders respHeaders = new HttpHeaders();
+        respHeaders.setContentLength(isr.length);
+        respHeaders.setContentType(new MediaType("text", "json"));
+        respHeaders.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        respHeaders.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=data.json");
+
+        return new ResponseEntity<>(isr, respHeaders, HttpStatus.OK);
+    }
+    private ResponseEntity<byte[]> mapToXmlAndExport(List<DataModel> dataModels) throws JAXBException {
+        DataModelList dataModelList = new DataModelList();
+        dataModelList.setItems(dataModels);
+
+        JAXBContext jaxbContext = JAXBContext.newInstance(DataModelList.class);
+        Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+
+        StringWriter sw = new StringWriter();
+        jaxbMarshaller.marshal(dataModelList, sw);
+        String xmlContent = sw.toString();
+
+        byte[] xmlBytes = xmlContent.getBytes(StandardCharsets.UTF_8);
+
+        HttpHeaders respHeaders = new HttpHeaders();
+        respHeaders.setContentType(new MediaType("application", "xml"));
+        respHeaders.setContentLength(xmlBytes.length);
+        respHeaders.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        respHeaders.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=data.xml");
+
+        return new ResponseEntity<>(xmlBytes, respHeaders, HttpStatus.OK);
+    }
+    private List<DataModel> filterAndSetData(List<Integer> years, List<DataModel> dataModels) {
+        if (years != null && !years.isEmpty()) {
+            for (DataModel dataModel : dataModels) {
+                List<DataValue> filteredData = dataModel.getData().stream()
+                        .filter(dataValue -> years.contains(dataValue.getYear()))
+                        .collect(Collectors.toList());
+                dataModel.setData(filteredData);
+            }
+        }
+
+        return dataModels;
     }
 }
