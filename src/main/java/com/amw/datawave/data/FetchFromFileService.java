@@ -23,7 +23,18 @@ public class FetchFromFileService {
     @Transactional
     public void fetchDataFromFileAndSave() {
         List<DataModel> dataModels = fetchData();
-        dataRepository.saveAll(dataModels);
+        List<DataModel> newDataModels = new ArrayList<>();
+        for (DataModel dataModel : dataModels) {
+            // Check if the data already exists in the database
+            Optional<DataModel> existingDataModel = dataRepository.findByNameAndMeasureUnitName(
+                    dataModel.getName(), dataModel.getMeasureUnitName()
+            );
+            if (existingDataModel.isEmpty()) {
+                // If the data does not exist, add it to the list to be saved
+                newDataModels.add(dataModel);
+            }
+        }
+        dataRepository.saveAll(newDataModels);
     }
 
     private List<DataModel> fetchData() {

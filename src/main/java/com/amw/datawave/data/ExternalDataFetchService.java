@@ -14,10 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Year;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -51,11 +48,21 @@ public class ExternalDataFetchService implements CommandLineRunner {
     }
 
 
-    // Metody zapisywania danych z zewnetrznych api do bazy danych
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public void fetchDataAndSave() {
         List<DataModel> dataModels = fetchData();
-        dataRepository.saveAll(dataModels);
+        List<DataModel> newDataModels = new ArrayList<>();
+        for (DataModel dataModel : dataModels) {
+            // Check if the data already exists in the database
+            Optional<DataModel> existingDataModel = dataRepository.findByNameAndMeasureUnitName(
+                    dataModel.getName(), dataModel.getMeasureUnitName()
+            );
+            if (existingDataModel.isEmpty()) {
+                // If the data does not exist, add it to the list to be saved
+                newDataModels.add(dataModel);
+            }
+        }
+        dataRepository.saveAll(newDataModels);
     }
 
     // Metoda pobierająca dane z zewnętrznego api

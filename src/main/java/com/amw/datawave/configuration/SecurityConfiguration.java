@@ -2,6 +2,7 @@ package com.amw.datawave.configuration;
 
 
 import com.amw.datawave.jwt.JwtAuthenticationFilter;
+import com.amw.datawave.user.Role;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -23,16 +24,17 @@ public class SecurityConfiguration {
     private final AuthenticationProvider authenticationProvider;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-//                        .requestMatchers("/api/v1/auth/**").permitAll()
-//                        .requestMatchers("/api/v1/data/**").hasAnyAuthority(Role.USER.name())
-//                        .requestMatchers("/api/v1/db/**").hasAnyAuthority(Role.ADMIN.name())
-//                        .anyRequest().authenticated()
-                                .requestMatchers("/logout").permitAll()
-                        .anyRequest().permitAll()
+                        .requestMatchers("/logout").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/data/**").hasAnyAuthority(Role.USER.name(), Role.ADMIN.name())
+                        .requestMatchers("/api/v1/data/import/**").hasAnyAuthority(Role.ADMIN.name())
+                        .requestMatchers("/api/v1/db/**").hasAnyAuthority(Role.ADMIN.name())
+                        .requestMatchers("/api/v1/user/**").hasAnyAuthority(Role.ADMIN.name())
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement -> sessionManagement
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
