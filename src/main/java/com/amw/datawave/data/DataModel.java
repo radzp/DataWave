@@ -25,9 +25,9 @@ public class DataModel {
     @XmlElement(name = "name")
     private String name;
 
-    @Column(name = "measure_unit_id")
-    @XmlElement(name = "measureUnitId")
-    private int measureUnitId;
+//    @Column(name = "measure_unit_id")
+//    @XmlElement(name = "measureUnitId")
+//    private int measureUnitId;
 
     @Column(name = "measure_unit_name")
     @XmlElement(name = "measureUnitName")

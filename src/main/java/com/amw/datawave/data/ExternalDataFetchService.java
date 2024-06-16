@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 @AllArgsConstructor
 public class ExternalDataFetchService implements CommandLineRunner {
     private final DataRepository dataRepository;
+    private final FetchFromFileService fetchFromFileService;
 
     // RestTemplate-klasa z Springa, która pozwala na wykonywanie zapytań HTTP
     private final RestTemplate restTemplate;
@@ -45,6 +46,8 @@ public class ExternalDataFetchService implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         fetchDataAndSave();
+        fetchFromFileService.fetchDataFromFileAndSave();
+
     }
 
 
@@ -84,7 +87,6 @@ public class ExternalDataFetchService implements CommandLineRunner {
                 int measureUnitId = apiResponse.getMeasureUnitId();
 
                 DataModel dataModel = new DataModel();
-                dataModel.setMeasureUnitId(measureUnitId);
                 dataModel.setName(idNameMap.get(id));
                 dataModel.setMeasureUnitName(measureMap.get(measureUnitId).getName());
                 dataModel.setMeasureUnitDescription(measureMap.get(measureUnitId).getDescription());
